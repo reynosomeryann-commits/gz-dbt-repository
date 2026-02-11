@@ -1,14 +1,75 @@
 version: 2
+
 sources:
   - name: raw
     schema: gz_raw_data
+    description: Raw operational tables loaded directly from the source system
+
     tables:
+
       - name: sales
         identifier: raw_gz_sales
+        description: One row per product sold within each order
+        loaded_at_field: "CAST(date_date AS TIMESTAMP)"
+        freshness:
+          warn_after:
+            period: day
+            count: 90
+        columns:
+          - name: date_date
+            description: Date of the purchase
+
+          - name: orders_id
+            description: Unique identifier of the order
+
+          - name: pdt_id
+            description: Product identifier purchased in the order
+
+          - name: revenue
+            description: Revenue generated for the product line
+
+          - name: quantity
+            description: Quantity of products sold
+        tests:
+          - unique:
+              column_name: "concat(cast(orders_id as string), '-', cast(pdt_id as string))"
+
       - name: product
         identifier: raw_gz_product
+        description: Product catalog containing purchase prices
+        columns:
+          - name: products_id
+            description: Unique product identifier
+            tests:
+              - not_null
+              - unique
+              
+
+          - name: purchse_price
+            description: Raw purchase price of the product (typo fixed later in staging)
+
+
       - name: ship
         identifier: raw_gz_ship
-        
+        description: Shipping and logistics costs per order
+        columns:
+          - name: orders_id
+            description: Unique identifier of the order
+            tests:
+              - not_null
+              - unique
 
-  
+          - name: shipping_fee
+            description: Shipping fee charged for the order
+
+          - name: shipping_fee_1
+            description: Duplicate shipping fee column
+
+          - name: log_cost
+            description: Logistics operational cost
+
+          - name: ship_cost
+            description: Shipping cost of the order
+
+          - name: transporter
+            description: Carrier responsible for the shipment
