@@ -1,3 +1,6 @@
+
+
+
 WITH orders_per_day AS (
 
   SELECT
