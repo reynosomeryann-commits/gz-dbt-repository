@@ -73,6 +73,84 @@ sources:
 
           - name: transporter
             description: Carrier responsible for the shipment
+
+      - name: adwords
+        identifier: raw_gz_adwords
+        description: Google Ads campaigns performance data
+        columns:
+          - name: date_date
+            description: Date of the campaign
+          - name: paid_source
+            description: Paid traffic source
+          - name: campaign_key
+            description: Unique campaign identifier
+          - name: camPGN_name
+            description: Campaign name
+          - name: ads_cost
+            description: Advertising cost in string format
+          - name: impression
+            description: Number of impressions
+          - name: click
+            description: Number of clicks
+
+      - name: bing
+        identifier: raw_gz_bing
+        description: Bing Ads campaigns performance data
+        columns:
+          - name: date_date
+            description: Date of the campaign
+          - name: paid_source
+            description: Paid traffic source
+          - name: campaign_key
+            description: Unique campaign identifier
+          - name: camPGN_name
+            description: Campaign name
+          - name: ads_cost
+            description: Advertising cost in string format
+          - name: impression
+            description: Number of impressions
+          - name: click
+            description: Number of clicks
+
+      - name: criteo
+        identifier: raw_gz_criteo
+        description: Criteo campaigns performance data
+        columns:
+          - name: date_date
+            description: Date of the campaign
+          - name: paid_source
+            description: Paid traffic source
+          - name: campaign_key
+            description: Unique campaign identifier
+          - name: camPGN_name
+            description: Campaign name
+          - name: ads_cost
+            description: Advertising cost in string format
+          - name: impression
+            description: Number of impressions
+          - name: click
+            description: Number of clicks
+
+      - name: facebook
+        identifier: raw_gz_facebook
+        description: Facebook Ads campaigns performance data
+        columns:
+          - name: date_date
+            description: Date of the campaign
+          - name: paid_source
+            description: Paid traffic source
+          - name: campaign_key
+            description: Unique campaign identifier
+          - name: camPGN_name
+            description: Campaign name
+          - name: ads_cost
+            description: Advertising cost in string format
+          - name: impression
+            description: Number of impressions
+          - name: click
+            description: Number of clicks
+
+
 models:
 
   - name: int_sales_margin
@@ -186,3 +264,157 @@ models:
 
       - name: ship_cost
         description: Shipping cost of the order.
+   
+  - name: int_campaigns
+    description: "Intermediate model combining all paid campaigns (adwords, bing, criteo, facebook) with UNION ALL."
+    columns:
+      - name: date_date
+        description: "Date of the campaign record."
+        tests:
+          - not_null
+
+      - name: paid_source
+        description: "Paid traffic source platform."
+        tests:
+          - not_null
+
+      - name: campaign_key
+        description: "Unique identifier of the campaign."
+        tests:
+          - not_null
+
+      - name: campaign_name
+        description: "Campaign name."
+
+      - name: ads_cost
+        description: "Advertising cost."
+        tests:
+          - not_null
+
+      - name: impression
+        description: "Number of impressions."
+
+      - name: click
+        description: "Number of clicks."
+
+  - name: int_campaigns_day
+    description: Daily aggregated campaigns performance with total cost, impressions and clicks
+
+    columns:
+      - name: date_date
+        description: Date of the campaign
+        tests:
+          - not_null
+          - unique
+
+      - name: ads_cost
+        description: Total advertising cost per day
+        tests:
+          - not_null
+
+      - name: impression
+        description: Total number of impressions per day
+        tests:
+          - not_null
+
+      - name: click
+        description: Total number of clicks per day
+        tests:
+          - not_null
+  - name: finance_campaigns_day
+    description: Daily finance KPIs joined with daily ads performance.
+
+    columns:
+      - name: date
+        description: Day (primary key)
+        tests:
+          - not_null
+          - unique
+
+      - name: ads_margin
+        description: Operational margin minus ads cost.
+
+      - name: average_basket
+        description: Average basket value.
+
+      - name: operational_margin
+        description: Operational margin.
+
+      - name: ads_cost
+        description: Total ads cost per day.
+
+      - name: ads_impression
+        description: Total ads impressions per day.
+
+      - name: ads_clicks
+        description: Total ads clicks per day.
+
+      - name: quantity
+        description: Total quantity sold per day.
+
+      - name: revenue
+        description: Total revenue per day.
+
+      - name: purchase_cost
+        description: Total purchase cost per day.
+
+      - name: margin
+        description: Revenue minus purchase cost.
+
+      - name: shipping_fee
+        description: Shipping fee per day.
+
+      - name: log_cost
+        description: Logistics cost per day.
+
+      - name: ship_cost
+        description: Shipping cost per day.
+
+  - name: finance_campaigns_month
+    description: Monthly aggregated finance KPIs and ads performance.
+
+    columns:
+      - name: datemonth
+        description: Month (primary key)
+        tests:
+          - not_null
+          - unique
+
+      - name: ads_margin
+        description: Total ads margin per month.
+
+      - name: average_basket
+        description: Average basket value (monthly average of daily average_basket).
+
+      - name: operational_margin
+        description: Total operational margin per month.
+
+      - name: ads_cost
+        description: Total ads cost per month.
+
+      - name: ads_impression
+        description: Total ads impressions per month.
+
+      - name: ads_clicks
+        description: Total ads clicks per month.
+
+      - name: quantity
+        description: Total quantity sold per month.
+
+      - name: revenue
+        description: Total revenue per month.
+
+      - name: purchase_cost
+        description: Total purchase cost per month.
+
+      - name: margin
+        description: Total margin per month.
+
+      - name: shipping_fee
+        description: Total shipping fee per month.
+
+      - name: log_cost
+        description: Total logistics cost per month.
+
+      - name: ship_cost
+        description: Total shipping cost per month.
