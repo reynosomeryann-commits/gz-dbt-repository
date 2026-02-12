@@ -1,0 +1,188 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: gz_raw_data
+    description: Raw operational tables loaded directly from the source system
+
+    tables:
+
+      - name: sales
+        identifier: raw_gz_sales
+        description: One row per product sold within each order
+        loaded_at_field: "CAST(date_date AS TIMESTAMP)"
+        freshness:
+          warn_after:
+            period: day
+            count: 90
+        columns:
+          - name: date_date
+            description: Date of the purchase
+
+          - name: orders_id
+            description: Unique identifier of the order
+
+          - name: pdt_id
+            description: Product identifier purchased in the order
+
+          - name: revenue
+            description: Revenue generated for the product line
+
+          - name: quantity
+            description: Quantity of products sold
+        tests:
+          - unique:
+              column_name: "concat(cast(orders_id as string), '-', cast(pdt_id as string))"
+
+      - name: product
+        identifier: raw_gz_product
+        description: Product catalog containing purchase prices
+        columns:
+          - name: products_id
+            description: Unique product identifier
+            tests:
+              - not_null
+              - unique
+              
+
+          - name: purchse_price
+            description: Raw purchase price of the product (typo fixed later in staging)
+
+
+      - name: ship
+        identifier: raw_gz_ship
+        description: Shipping and logistics costs per order
+        columns:
+          - name: orders_id
+            description: Unique identifier of the order
+            tests:
+              - not_null
+              - unique
+
+          - name: shipping_fee
+            description: Shipping fee charged for the order
+
+          - name: shipping_fee_1
+            description: Duplicate shipping fee column
+
+          - name: log_cost
+            description: Logistics operational cost
+
+          - name: ship_cost
+            description: Shipping cost of the order
+
+          - name: transporter
+            description: Carrier responsible for the shipment
+models:
+
+  - name: int_sales_margin
+    description: Intermediate model joining sales and products to calculate purchase_cost and margin at product-line level (per order and product).
+
+    tests:
+      - unique:
+          column_name: "concat(cast(orders_id as string), '_', cast(products_id as string))"
+
+    columns:
+      - name: date_date
+        description: Date of the purchase.
+        tests:
+          - not_null
+
+      - name: orders_id
+        description: Unique order identifier.
+        tests:
+          - not_null
+
+      - name: products_id
+        description: Product identifier purchased in the order.
+        tests:
+          - not_null
+
+      - name: quantity
+        description: Number of items sold for the product line.
+        tests:
+          - not_null
+
+      - name: revenue
+        description: Revenue generated for the product line.
+        tests:
+          - not_null
+
+      - name: purchase_price
+        description: Purchase price (cost) of the product.
+
+      - name: purchase_cost
+        description: Total purchase cost for the product line (quantity * purchase_price).
+        tests:
+          - not_null
+
+      - name: margin
+        description: Margin for the product line (revenue - purchase_cost).
+        tests:
+          - not_null
+
+
+  - name: int_orders_margin
+    description: Intermediate model aggregating int_sales_margin at order level (one row per order).
+
+    columns:
+      - name: orders_id
+        description: Unique order identifier.
+        tests:
+          - not_null
+          - unique
+
+      - name: date_date
+        description: Date of the purchase.
+
+      - name: revenue
+        description: Total revenue for the order.
+
+      - name: quantity
+        description: Total quantity of products sold in the order.
+
+      - name: purchase_cost
+        description: Total purchase cost for the order.
+        tests:
+          - not_null
+
+      - name: margin
+        description: Total margin for the order (revenue - purchase_cost).
+
+
+  - name: int_orders_operational
+    description: Intermediate model adding shipping/logistics information to order margin and computing operational_margin.
+
+    columns:
+      - name: orders_id
+        description: Unique order identifier.
+        tests:
+          - not_null
+          - unique
+
+      - name: date_date
+        description: Date of the purchase.
+
+      - name: operational_margin
+        description: Operational margin = margin + shipping_fee - (logcost + ship_cost).
+
+      - name: quantity
+        description: Total quantity of products sold in the order.
+
+      - name: revenue
+        description: Total revenue for the order.
+
+      - name: purchase_cost
+        description: Total purchase cost for the order.
+
+      - name: margin
+        description: Total margin for the order (revenue - purchase_cost).
+
+      - name: shipping_fee
+        description: Shipping fee charged to the customer.
+
+      - name: logcost
+        description: Logistics cost of the shipment.
+
+      - name: ship_cost
+        description: Shipping cost of the order.
